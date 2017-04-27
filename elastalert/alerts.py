@@ -29,6 +29,7 @@ from util import EAException
 from util import elastalert_logger
 from util import lookup_es_key
 from util import pretty_ts
+from util import render_string
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -51,38 +52,17 @@ class BasicMatchString(object):
             self.text += '\n'
 
     def _add_custom_alert_text(self):
-        missing = '<MISSING VALUE>'
-        alert_text = unicode(self.rule.get('alert_text', ''))
+        args = kws = False
         if 'alert_text_args' in self.rule:
-            alert_text_args = self.rule.get('alert_text_args')
-            alert_text_values = [lookup_es_key(self.match, arg) for arg in alert_text_args]
-
-            # Support referencing other top-level rule properties
-            # This technically may not work if there is a top-level rule property with the same name
-            # as an es result key, since it would have been matched in the lookup_es_key call above
-            for i in xrange(len(alert_text_values)):
-                if alert_text_values[i] is None:
-                    alert_value = self.rule.get(alert_text_args[i])
-                    if alert_value:
-                        alert_text_values[i] = alert_value
-
-            alert_text_values = [missing if val is None else val for val in alert_text_values]
-            alert_text = alert_text.format(*alert_text_values)
+            args = self.rule.get('alert_text_args')
         elif 'alert_text_kw' in self.rule:
-            kw = {}
-            for name, kw_name in self.rule.get('alert_text_kw').items():
-                val = lookup_es_key(self.match, name)
+            kws = self.rule.get('alert_text_kw')
 
-                # Support referencing other top-level rule properties
-                # This technically may not work if there is a top-level rule property with the same name
-                # as an es result key, since it would have been matched in the lookup_es_key call above
-                if val is None:
-                    val = self.rule.get(name)
+        data = self.rule.copy()
+        data.update(self.match)
+        text = unicode(self.rule.get('alert_text', ''))
 
-                kw[kw_name] = missing if val is None else val
-            alert_text = alert_text.format(**kw)
-
-        self.text += alert_text
+        self.text += render_string(text, data, text_args=args, text_kws=kws)
 
     def _add_rule_text(self):
         self.text += self.rule['type'].get_match_str(self.match)

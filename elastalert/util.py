@@ -337,3 +337,22 @@ def build_es_conn_config(conf):
         parsed_conf['es_url_prefix'] = conf['es_url_prefix']
 
     return parsed_conf
+
+
+def render_string(string, data, text_args=False, text_kws=False):
+    missing = '<MISSING VALUE>'
+
+    if text_args:
+        text_values = [lookup_es_key(data, arg) for arg in text_args]
+
+        text_values = [missing if val is None else val for val in text_values]
+        string = string.format(*text_values)
+    elif text_kws:
+        kw = {}
+        for name, kw_name in text_kws.items():
+            val = lookup_es_key(data, name)
+
+            kw[kw_name] = missing if val is None else val
+        string = string.format(**kw)
+
+    return string
