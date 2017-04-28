@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from elastalert.util import lookup_es_key, set_es_key, add_raw_postfix, replace_dots_in_field_names
+from elastalert.util import lookup_es_key, set_es_key, add_raw_postfix, replace_dots_in_field_names, render_string
 
 
 def test_setting_keys(ea):
@@ -100,3 +100,63 @@ def test_replace_dots_in_field_names(ea):
     }
     assert replace_dots_in_field_names(actual) == expected
     assert replace_dots_in_field_names({'a': 0, 1: 2}) == {'a': 0, 1: 2}
+
+
+def test_render_string_no_data():
+    string = 'Testing'
+    data = {}
+    args = ['a']
+    keywords = ['b']
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == string
+
+
+def test_render_string_no_args_kws():
+    string = 'Testing'
+    data = {'a': 'b'}
+    args = False
+    keywords = False
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == string
+
+
+def test_render_string_args():
+    string = 'Testing {0} {1}'
+    data = {'a': 1, 'b': 2}
+    args = ['a', 'b']
+    keywords = False
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == 'Testing 1 2'
+
+
+def test_render_string_kws():
+    string = 'Testing {test1} {test2}'
+    data = {'a': 1, 'b': 2}
+    args = False
+    keywords = {'a': 'test1', 'b': 'test2'}
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == 'Testing 1 2'
+
+
+def test_render_string_args_missing():
+    string = 'Testing {0} {1}'
+    data = {'a': 1}
+    args = ['a', 'b']
+    keywords = False
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == 'Testing 1 <MISSING VALUE>'
+
+
+def test_render_string_kws_missing():
+    string = 'Testing {test1} {test2}'
+    data = {'b': 2}
+    args = False
+    keywords = {'a': 'test1', 'b': 'test2'}
+
+    rendered = render_string(string, data, text_args=args, text_kws=keywords)
+    assert rendered == 'Testing <MISSING VALUE> 2'
