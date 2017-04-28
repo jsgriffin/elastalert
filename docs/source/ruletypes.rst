@@ -1442,6 +1442,7 @@ The alerter requires the following option:
 
 ``pagerduty_incident_key``: If not set pagerduty will trigger a new incident for each alert sent. If set to a unique string per rule pagerduty will identify the incident that this event should be applied.
 If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an open incident with a matching key, this event will be appended to that incident's log.
+``pagerduty_incident_key`` can be further formatted using standard Python formatting syntax. Similar to ``alert_text``, you may also refer to any top-level rule property in the ``pagerduty_incident_key_args``, ``pagerduty_incident_key_kw fields``.  However, if the matched document has a key with the same name, that will take preference over the rule property.
 
 ``pagerduty_proxy``: By default ElastAlert will not use a network proxy to send notifications to Pagerduty. Set this option using ``hostname:port`` if you need to use a proxy.
 
