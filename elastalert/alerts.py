@@ -52,17 +52,14 @@ class BasicMatchString(object):
             self.text += '\n'
 
     def _add_custom_alert_text(self):
-        args = kws = False
-        if 'alert_text_args' in self.rule:
-            args = self.rule.get('alert_text_args')
-        elif 'alert_text_kw' in self.rule:
-            kws = self.rule.get('alert_text_kw')
-
         data = self.rule.copy()
         data.update(self.match)
-        text = unicode(self.rule.get('alert_text', ''))
 
-        self.text += render_string(text, data, text_args=args, text_kws=kws)
+        self.text += render_string(
+            unicode(self.rule.get('alert_text', '')),
+            data,
+            text_args=self.rule.get('alert_text_args', False),
+            text_kws=self.rule.get('alert_text_kw', False))
 
     def _add_rule_text(self):
         self.text += self.rule['type'].get_match_str(self.match)
