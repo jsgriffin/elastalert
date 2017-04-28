@@ -946,13 +946,22 @@ class PagerDutyAlerter(Alerter):
     def alert(self, matches):
         body = self.create_alert_body(matches)
 
+        data = self.rule.copy()
+        for match in matches:
+            data.update(match)
+        incident_key = render_string(
+            self.pagerduty_incident_key,
+            data,
+            text_args=self.rule.get('pagerduty_incident_key_args', False),
+            text_kws=self.rule.get('pagerduty_incident_key_kw', False))
+
         # post to pagerduty
         headers = {'content-type': 'application/json'}
         payload = {
             'service_key': self.pagerduty_service_key,
             'description': self.rule['name'],
             'event_type': 'trigger',
-            'incident_key': self.pagerduty_incident_key,
+            'incident_key': incident_key,
             'client': self.pagerduty_client_name,
             'details': {
                 "information": body.encode('UTF-8'),

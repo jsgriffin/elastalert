@@ -14,6 +14,7 @@ from elastalert.alerts import CommandAlerter
 from elastalert.alerts import EmailAlerter
 from elastalert.alerts import JiraAlerter
 from elastalert.alerts import JiraFormattedMatchString
+from elastalert.alerts import PagerDutyAlerter
 from elastalert.alerts import SimplePostAlerter
 from elastalert.alerts import SlackAlerter
 from elastalert.config import load_modules
@@ -817,6 +818,23 @@ def test_slack_uses_custom_slack_channel():
     }
     mock_post_request.assert_called_once_with(rule['slack_webhook_url'][0], data=mock.ANY, headers={'content-type': 'application/json'}, proxies=None)
     assert expected_data == json.loads(mock_post_request.call_args_list[0][1]['data'])
+
+
+def test_pagerduty_custom_incident_key():
+    rule = {'name': 'Test', 'pagerduty_service_key': 'pdservicekey', 'pagerduty_client_name': 'pdclientname',
+            'type': mock_rule(), 'timestamp_field': '@timestamp',
+            'pagerduty_incident_key': 'Testing {0} {1}', 'pagerduty_incident_key_args': ['test1', 'test2']}
+
+    with mock.patch('requests.post') as mock_post:
+        alert = PagerDutyAlerter(rule)
+        alert.alert([{'test1': '1', 'test2': '2'}])
+
+        assert mock_post.called
+
+        data = mock_post.mock_calls[0][2]['data']
+        incident_key = json.loads(data)['incident_key']
+
+        assert 'Testing 1 2' == incident_key
 
 
 def test_simple_alerter():
